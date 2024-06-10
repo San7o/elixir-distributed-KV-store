@@ -209,6 +209,3 @@ You can get a windows with a lot of informations with:
 [Enumeration cheatsheet](https://hexdocs.pm/elixir/enum-cheat.html)
 
 [Introduction](https://hexdocs.pm/elixir/basic-types.html)
-
-I have arrived at:
-https://hexdocs.pm/elixir/processes.html
