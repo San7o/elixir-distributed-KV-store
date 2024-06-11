@@ -32,6 +32,7 @@ defmodule KV.Registry do
 
 
   ## Server callbacks
+  #
   # We are using three callbackes:
   # - handle_call: synchronous calls
   # - handle_cast: asynchronous calls
@@ -47,7 +48,7 @@ defmodule KV.Registry do
     {:ok, {names, refs}}
   end
 
-  # Calls are synchronous, the cliend is waiting for
+  # Calls are synchronous, the client is waiting for
   # a response
   @impl true
   def handle_call({:lookup, name}, _from, state) do
