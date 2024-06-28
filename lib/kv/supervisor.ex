@@ -12,6 +12,11 @@ defmodule KV.Supervisor do
   # `use Agent`, `use GenServer`, `use Supervisor`
   def init(:ok) do
     children = [
+      # A dynamic supervisor is a supervisor that
+      # can start children dynamically. Since it does not
+      # define any children during initialization, we can
+      # skip having a separate module for it
+      {DynamicSupervisor, name: KV.BucketSupervisor, strategy: :one_for_one},
       # The supervisor will call
       # `KV.Registry.start_link(name: KV.Registry)`
       # This way, we are starting named buckets
@@ -19,6 +24,6 @@ defmodule KV.Supervisor do
       {KV.Registry, name: KV.Registry}
     ]
 
-    Supervisor.init(children, strategy: :one_for_one)
+    Supervisor.init(children, strategy: :one_for_all)
   end
 end

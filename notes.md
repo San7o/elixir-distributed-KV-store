@@ -45,3 +45,13 @@ You can run the formatter with:
 mix format
 ```
 The formatter configuration is located in `.formatter.exs`
+
+## Observer
+
+Run `iex -s mix` and the add the following lines:
+```elixir
+Mix.ensure_application!(:wx)             # Not necessary on Erlang/OTP 27+
+Mix.ensure_application!(:runtime_tools)  # Not necessary on Erlang/OTP 27+
+Mix.ensure_application!(:observer)
+:observer.start()
+```

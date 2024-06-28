@@ -4,14 +4,17 @@ defmodule KV.Registry do
   ## Client API
 
   @doc """
-  Starts the registry.
+  Starts the registry with the given options.
+
+  `:name` is always required.
   """
   def start_link(opts) do
+    server = Keyword.fetch!(opts, :name)
     # `__MODULE__` is the current module, where the
     # callbacks are implemented
     # :ok is the initialization argumet
     # `opts` is a list of options for the Server
-    GenServer.start_link(__MODULE__, :ok, opts)
+    GenServer.start_link(__MODULE__, server, opts)
   end
 
   @doc """
@@ -20,16 +23,18 @@ defmodule KV.Registry do
   Returns `{:ok, pid}` if the bucket exixsts, `:error` otherwise.
   """
   def lookup(server, name) do
-    GenServer.call(server, {:lookup, name})
+    case :ets.lookup(server, name) do
+      [{^name, pid}] -> {:ok, pid}
+      [] -> :error
+    end
   end
 
   @doc """
   Ensuers there is a bucket associated with the given `name` in `server`.
   """
   def create(server, name) do
-    GenServer.cast(server, {:create, name})
+    GenServer.call(server, {:create, name})
   end
-
 
   ## Server callbacks
   #
@@ -42,11 +47,22 @@ defmodule KV.Registry do
   # `@impl true` is a directive that tells the compiler
   # that the function is part of the GenServer behaviour
   # that should be implemented (an interface)
-  def init(:ok) do
-    names = %{} # will contain {name, pid}
-    refs = %{} # will contain {ref, name}
+  def init(table) do
+    # By default, the table will use:
+    # :protected - only the process that created the table can write to it
+    #              but any process can read from it
+    # :set - the table will not allow duplicate keys
+    #
+    # We are using:
+    # :read_concurrency - allows multiple processes to read from the table
+    names = :ets.new(table, [:named_table, read_concurrency: true])
+    # will contain {ref, name}
+    refs = %{}
     {:ok, {names, refs}}
   end
+
+  @doc """
+  OLD: Example handle_call
 
   # Calls are synchronous, the client is waiting for
   # a response
@@ -56,22 +72,20 @@ defmodule KV.Registry do
     # format {:reply, reply, new_state}
     {:reply, Map.fetch(names, name), state}
   end
+  """
 
-  # Casts are asynchronous, the server won't send a
-  # response so the client won't wait for one
   @impl true
-  def handle_cast({:create, name}, {names, refs}) do
-    if Map.has_key?(names, name) do
-      {:noreply, {names, refs}}
-    else
-      # Here we are both linking and monitoring the bucket
-      # This is not a good idea, since we don't want the
-      # registry to crash if the bucket crashes
-      {:ok, bucket} = KV.Bucket.start_link([])
-      ref = Process.monitor(bucket)
-      refs = Map.put(refs, ref, name)
-      names = Map.put(names, name, bucket)
-      {:noreply, {names, refs}}
+  def handle_call({:create, name}, _from, {names, refs}) do
+    case lookup(names, name) do
+      {:ok, pid} ->
+        {:reply, pid, {names, refs}}
+
+      :error ->
+        {:ok, pid} = DynamicSupervisor.start_child(KV.BucketSupervisor, KV.Bucket)
+        ref = Process.monitor(pid)
+        refs = Map.put(refs, ref, name)
+        :ets.insert(names, {name, pid})
+        {:reply, pid, {names, refs}}
     end
   end
 
@@ -79,9 +93,9 @@ defmodule KV.Registry do
   # Must be used for all messages a server may receive
   # that are not sent via `call` or `cast`, including
   # regular messages set with `send`
-  def handle_info({:DOWN, ref, :process, _pid, _reason}, {names, refs} ) do
+  def handle_info({:DOWN, ref, :process, _pid, _reason}, {names, refs}) do
     {name, refs} = Map.pop(refs, ref)
-    names = Map.delete(names, name)
+    :ets.delete(names, name)
     {:noreply, {names, refs}}
   end
 

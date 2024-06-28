@@ -1,5 +1,9 @@
 defmodule KV.Bucket do
-  use Agent
+  # `restart: :temporary` means that the Agent will not be
+  # restarted if it crashes. We want this because when the 
+  # supervisor restarts the new bucket, the registry does
+  # not know about it.
+  use Agent, restart: :temporary
 
   @doc """
   Starts a new bucket.
