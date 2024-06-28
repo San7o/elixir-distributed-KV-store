@@ -41,20 +41,43 @@ defmodule KVServer do
   # Loop that reads a line from the client and writes it back
   # to the socket (echo).
   defp serve(socket) do
-    socket
-      |> read_line()
-      |> write_line(socket)
+    msg =
+      # with will retrieve the value returned by the
+      # right-side of <- and match it against the pattern
+      # on the left side. If the value matches the pattern,
+      # with moves on to the next expression. In case
+      # there is no match, the non-matching value is returned.
+      with {:ok, data} <- read_line(socket),
+           {:ok, command} <- KVServer.Command.parse(data),
+           do: KVServer.Command.run(command)
 
+    write_line(socket, msg)
     serve(socket)
   end
 
   defp read_line(socket) do
-    {:ok, data} = :gen_tcp.recv(socket, 0)
-    data
+    :gen_tcp.recv(socket, 0)
   end
 
-  defp write_line(line, socket) do
-    :gen_tcp.send(socket, line)
+  defp write_line(socket, {:ok, text}) do
+    :gen_tcp.send(socket, text)
+  end
+
+  defp write_line(socket, {:error, :unknown_command}) do
+    :gen_tcp.send(socket, "UNKNOWN COMMAND\r\n")
+  end
+
+  defp write_line(_socket, {:error, :closed}) do
+    exit(:shoudown)
+  end
+
+  defp write_line(socket, {:error, :not_found}) do
+    :gen_tcp.send(socket, "NOT FOUND\r\n")
+  end
+
+  defp write_line(socket, {:error, error}) do
+    :gen_tcp.send(socket, "ERROR\r\n")
+    exit(error)
   end
 
 end

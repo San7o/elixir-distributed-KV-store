@@ -1,6 +1,6 @@
 # KV
 
-The backend KV store
+The library KV store
 
 # Notes
 
