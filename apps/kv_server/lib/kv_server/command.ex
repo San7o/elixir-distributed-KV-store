@@ -1,5 +1,4 @@
 defmodule KVServer.Command do
-
   @doc """
   Runs the given command.
   """
@@ -41,7 +40,6 @@ defmodule KVServer.Command do
       :error -> {:error, :not_found}
     end
   end
-  
 
   # Doctests are specified by an indentation of four
   # spaces followed by `iex>`.
@@ -54,7 +52,7 @@ defmodule KVServer.Command do
 
       iex> KVServer.Command.parse("CREATE shopping\r\n")
       {:ok, {:create, "shopping"}}
-  
+
       iex> KVServer.Command.parse "CREATE  shopping  \r\n"
       {:ok, {:create, "shopping"}}
 

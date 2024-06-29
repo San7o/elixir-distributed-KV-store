@@ -22,7 +22,9 @@ defmodule KV.MixProject do
       extra_applications: [:logger],
       # The `:mod` option specifies the application callback module
       # which must implement the `Application` behaviour
-      mod: {KV, []}
+      mod: {KV, []},
+      # Defining the environment
+      env: [routing_table: []]
     ]
   end
 

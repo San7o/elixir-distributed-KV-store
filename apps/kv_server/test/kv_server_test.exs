@@ -3,8 +3,9 @@ defmodule KVServerTest do
   # Since the test relies on global data, the tests
   # are not async
 
-  @moduletag :capture_log # No logs gor the entire module
-  
+  # No logs gor the entire module
+  @moduletag :capture_log
+
   setup do
     Application.stop(:kv)
     :ok = Application.start(:kv)
@@ -12,30 +13,30 @@ defmodule KVServerTest do
 
   setup do
     opts = [:binary, packet: :line, active: false]
-    {:ok, socket} = :gen_tcp.connect('localhost', 4040, opts)
+    {:ok, socket} = :gen_tcp.connect(~c"localhost", 4040, opts)
     %{socket: socket}
   end
 
-  @tag :distributed
+  # @tag :distributed
   test "server interaction", %{socket: socket} do
     assert send_and_recv(socket, "UNKNOWN shopping\r\n") ==
-           "UNKNOWN COMMAND\r\n"
+             "UNKNOWN COMMAND\r\n"
 
     assert send_and_recv(socket, "GET shopping eggs\r\n") ==
-           "NOT FOUND\r\n"
+             "NOT FOUND\r\n"
 
     assert send_and_recv(socket, "CREATE shopping\r\n") ==
-           "OK\r\n"
+             "OK\r\n"
 
     assert send_and_recv(socket, "PUT shopping eggs 3\r\n") ==
-           "OK\r\n"
+             "OK\r\n"
 
     # GET returns two lines
     assert send_and_recv(socket, "GET shopping eggs\r\n") == "3\r\n"
     assert send_and_recv(socket, "") == "OK\r\n"
 
     assert send_and_recv(socket, "DELETE shopping eggs\r\n") ==
-           "OK\r\n"
+             "OK\r\n"
 
     # GET returns two lines
     assert send_and_recv(socket, "GET shopping eggs\r\n") == "\r\n"

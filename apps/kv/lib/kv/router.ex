@@ -24,16 +24,14 @@ defmodule KV.Router do
   end
 
   defp no_entry_error(bucket) do
-    raise "could not find entry for #{inspect bucket} in table #{inspect table()}"
+    raise "could not find entry for #{inspect(bucket)} in table #{inspect(table())}"
   end
 
   @doc """
   The routing table.
   """
   def table do
-    [
-      {?a..?m, :foo@nixos},
-      {?n..?z, :bar@nixos}
-    ]
+    # Defined in `mix.exs` as `env: [routing_table: []]`
+    Application.fetch_env!(:kv, :routing_table)
   end
 end

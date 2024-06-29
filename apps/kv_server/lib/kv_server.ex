@@ -4,7 +4,7 @@ defmodule KVServer do
   @moduledoc """
   Documentation for `KVServer`.
   """
-  
+
   @doc """
   Starts accepting connections on the given `port`.
   """
@@ -16,9 +16,12 @@ defmodule KVServer do
     # 3. `active: false` - blocks on `:gen_tcp.recv/2` until data is available
     # 4. `reuseaddr: true` - allows us to reuse the address if the listener crashes
     #
-    {:ok, socket} = :gen_tcp.listen(port,
-                                       [:binary, packet: :line,
-                                         active: false, reuseaddr: true])
+    {:ok, socket} =
+      :gen_tcp.listen(
+        port,
+        [:binary, packet: :line, active: false, reuseaddr: true]
+      )
+
     Logger.info("Accepting connections on port #{port}")
     loop_acceptor(socket)
   end
@@ -41,12 +44,12 @@ defmodule KVServer do
   # Loop that reads a line from the client and writes it back
   # to the socket (echo).
   defp serve(socket) do
+    # with will retrieve the value returned by the
+    # right-side of <- and match it against the pattern
+    # on the left side. If the value matches the pattern,
+    # with moves on to the next expression. In case
+    # there is no match, the non-matching value is returned.
     msg =
-      # with will retrieve the value returned by the
-      # right-side of <- and match it against the pattern
-      # on the left side. If the value matches the pattern,
-      # with moves on to the next expression. In case
-      # there is no match, the non-matching value is returned.
       with {:ok, data} <- read_line(socket),
            {:ok, command} <- KVServer.Command.parse(data),
            do: KVServer.Command.run(command)
@@ -79,5 +82,4 @@ defmodule KVServer do
     :gen_tcp.send(socket, "ERROR\r\n")
     exit(error)
   end
-
 end
