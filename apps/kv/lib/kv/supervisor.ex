@@ -21,7 +21,10 @@ defmodule KV.Supervisor do
       # `KV.Registry.start_link(name: KV.Registry)`
       # This way, we are starting named buckets
       # and we can refer to them by name
-      {KV.Registry, name: KV.Registry}
+      {KV.Registry, name: KV.Registry},
+
+      # Creating a task supervisor for distributed tasks
+      {Task.Supervisor, name: KV.RouterTasks}
     ]
 
     Supervisor.init(children, strategy: :one_for_all)
